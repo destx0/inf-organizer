@@ -21,13 +21,11 @@ import {
 	Settings,
 	Upload,
 	User,
-	FileText,
 	Book,
-	Brain,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 function isExamArray(data: any): data is { exams: any[] } {
 	return data && Array.isArray(data.exams);
@@ -35,7 +33,7 @@ function isExamArray(data: any): data is { exams: any[] } {
 
 export function MainSidebar() {
 	const user = useAuthStore((state) => state.user);
-	const { data, fetchData } = useOrganizerStore();
+	const { data, fetchData, setSelectedId } = useOrganizerStore();
 
 	useEffect(() => {
 		fetchData();
@@ -58,6 +56,54 @@ export function MainSidebar() {
 				),
 		  }))
 		: [];
+
+	const handleNodeClick = useCallback(
+		(nodeId: string) => {
+			// Check if it's a section or topic
+			const isValidNode = data?.exams?.some((exam: any) =>
+				Object.values(exam.sections).some(
+					(section: any) =>
+						section.section_batchid === nodeId || // Check if it's a section
+						section.topics.some(
+							(topic: any) => topic.topic_batchid === nodeId
+						) // Check if it's a topic
+				)
+			);
+
+			// Add more detailed console.log for debugging
+			console.log({
+				nodeId,
+				isValidNode,
+				sections: data?.exams?.flatMap((exam) =>
+					Object.values(exam.sections).map((section) => ({
+						id: section.section_batchid,
+						name: section.name,
+						topics: section.topics.map((topic) => ({
+							id: topic.topic_batchid,
+							name: topic.name,
+						})),
+					}))
+				),
+				treeData: treeData.flatMap((exam) =>
+					exam.children.flatMap((section) => [
+						{
+							id: section.id,
+							name: section.name,
+						},
+						...(section.children?.map((topic) => ({
+							id: topic.id,
+							name: topic.name,
+						})) || []),
+					])
+				),
+			});
+
+			if (isValidNode) {
+				setSelectedId(nodeId);
+			}
+		},
+		[data, setSelectedId, treeData]
+	);
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -124,7 +170,11 @@ export function MainSidebar() {
 					<h3 className="mb-4 text-sm font-medium text-muted-foreground">
 						Exam Categories
 					</h3>
-					<TreeView data={treeData} className="[&>li]:pl-0" />
+					<TreeView
+						data={treeData}
+						className="[&>li]:pl-0"
+						onNodeClick={handleNodeClick}
+					/>
 				</div>
 			</SidebarContent>
 			<SidebarFooter className="border-t p-4">

@@ -3,13 +3,16 @@ import { OrganizerData } from "@/types/organizer";
 
 interface OrganizerStore {
 	data: OrganizerData | null;
+	selectedId: string | null;
 	isLoading: boolean;
 	error: string | null;
 	fetchData: () => Promise<void>;
+	setSelectedId: (id: string | null) => void;
 }
 
 export const useOrganizerStore = create<OrganizerStore>((set) => ({
 	data: null,
+	selectedId: null,
 	isLoading: false,
 	error: null,
 	fetchData: async () => {
@@ -22,4 +25,5 @@ export const useOrganizerStore = create<OrganizerStore>((set) => ({
 			set({ error: "Failed to fetch organizer data", isLoading: false });
 		}
 	},
+	setSelectedId: (id) => set({ selectedId: id }),
 }));

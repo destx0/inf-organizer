@@ -32,6 +32,7 @@ type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
 	expandAll?: boolean;
 	defaultNodeIcon?: any;
 	defaultLeafIcon?: any;
+	onNodeClick?: (nodeId: string) => void;
 };
 
 const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
@@ -43,6 +44,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 			expandAll,
 			defaultLeafIcon,
 			defaultNodeIcon,
+			onNodeClick,
 			className,
 			...props
 		},
@@ -58,8 +60,11 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
 				if (onSelectChange) {
 					onSelectChange(item);
 				}
+				if (onNodeClick && item) {
+					onNodeClick(item.id);
+				}
 			},
-			[onSelectChange]
+			[onSelectChange, onNodeClick]
 		);
 
 		const expandedItemIds = React.useMemo(() => {
@@ -251,7 +256,7 @@ const TreeLeaf = React.forwardRef<
 			<div
 				ref={ref}
 				className={cn(
-					"ml-5 flex text-left items-center py-2 cursor-pointer before:right-1",
+					"ml-3 flex text-left items-center py-2 cursor-pointer before:right-1",
 					treeVariants(),
 					className,
 					selectedItemId === item.id && selectedTreeVariants()

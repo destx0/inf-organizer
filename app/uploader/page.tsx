@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload } from "lucide-react";
 import { useUploadStore } from "@/lib/store/upload-store";
+import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function UploaderPage() {
 	const {
@@ -16,6 +18,36 @@ export default function UploaderPage() {
 		setProgress,
 		reset,
 	} = useUploadStore();
+
+	const { data, selectedId } = useOrganizerStore();
+
+	// Find the selected section or topic name
+	const selectedNode =
+		selectedId && data?.exams
+			? data.exams
+					.flatMap((exam) =>
+						Object.values(exam.sections).flatMap((section) => [
+							{
+								id: section.section_batchid,
+								name: section.name,
+								type: "section",
+							},
+							...section.topics.map((topic) => ({
+								id: topic.topic_batchid,
+								name: topic.name,
+								type: "topic",
+							})),
+						])
+					)
+					.find((node) => node.id === selectedId)
+			: null;
+
+	// Add console.log for debugging
+	console.log({
+		selectedId,
+		selectedNode,
+		data: data?.exams,
+	});
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
@@ -54,17 +86,33 @@ export default function UploaderPage() {
 				</p>
 			</div>
 
+			{selectedNode ? (
+				<Alert>
+					<AlertDescription>
+						Uploading to {selectedNode.type}:{" "}
+						<span className="font-medium">{selectedNode.name}</span>
+					</AlertDescription>
+				</Alert>
+			) : (
+				<Alert variant="destructive">
+					<AlertDescription>
+						Please select a section or topic from the sidebar to
+						upload content
+					</AlertDescription>
+				</Alert>
+			)}
+
 			<div className="flex flex-col gap-4 rounded-lg border p-4">
 				<Input
 					type="file"
 					onChange={handleFileChange}
 					className="cursor-pointer"
-					disabled={isUploading}
+					disabled={isUploading || !selectedId}
 				/>
 				{isUploading && <Progress value={progress} />}
 				<Button
 					onClick={handleUpload}
-					disabled={!file || isUploading}
+					disabled={!file || isUploading || !selectedId}
 					className="w-full"
 				>
 					<Upload className="mr-2 h-4 w-4" />
