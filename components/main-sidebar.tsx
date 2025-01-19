@@ -46,17 +46,17 @@ export function MainSidebar() {
 				id: exam.full_mock,
 				name: exam.name,
 				icon: Book,
-				children: Object.entries(exam.sections).map(([key, section]) => ({
-					id: section.section_batchid,
-					name: section.name,
-					icon: FileText,
-					children: section.topics.map((topic) => ({
-						id: topic.topic_batchid,
-						name: `${topic.name} (${topic.no_of_questions})`,
-						icon: Brain,
-					})),
-				}))
-		}))
+				children: Object.entries(exam.sections).map(
+					([key, section]) => ({
+						id: section.section_batchid,
+						name: section.name,
+						children: section.topics.map((topic) => ({
+							id: topic.topic_batchid,
+							name: `${topic.name} (${topic.no_of_questions})`,
+						})),
+					})
+				),
+		  }))
 		: [];
 
 	const handleGoogleLogin = async () => {
@@ -78,13 +78,18 @@ export function MainSidebar() {
 
 	return (
 		<Sidebar>
-			<SidebarHeader className="border-b p-4">
-				<h2 className="font-semibold">Infinity Organizer</h2>
+			<SidebarHeader className="border-b px-6 py-4">
+				<h2 className="text-lg font-semibold tracking-tight">
+					Infinity Organizer
+				</h2>
 			</SidebarHeader>
-			<SidebarContent>
+			<SidebarContent className="px-2">
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<SidebarMenuButton asChild>
+						<SidebarMenuButton
+							asChild
+							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
+						>
 							<a href="/">
 								<Home className="h-4 w-4" />
 								<span>Home</span>
@@ -92,7 +97,10 @@ export function MainSidebar() {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
-						<SidebarMenuButton asChild>
+						<SidebarMenuButton
+							asChild
+							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
+						>
 							<a href="/uploader">
 								<Upload className="h-4 w-4" />
 								<span>Uploader</span>
@@ -100,7 +108,10 @@ export function MainSidebar() {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
-						<SidebarMenuButton asChild>
+						<SidebarMenuButton
+							asChild
+							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
+						>
 							<a href="/settings">
 								<Settings className="h-4 w-4" />
 								<span>Settings</span>
@@ -110,7 +121,7 @@ export function MainSidebar() {
 				</SidebarMenu>
 
 				<div className="mt-6 px-4">
-					<h3 className="mb-2 text-sm font-medium">
+					<h3 className="mb-4 text-sm font-medium text-muted-foreground">
 						Exam Categories
 					</h3>
 					<TreeView data={treeData} className="[&>li]:pl-0" />
@@ -118,31 +129,33 @@ export function MainSidebar() {
 			</SidebarContent>
 			<SidebarFooter className="border-t p-4">
 				{user ? (
-					<div className="flex flex-col gap-2">
+					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
-							<User className="h-4 w-4" />
-							<span className="text-sm font-medium">
+							<div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center">
+								<User className="h-4 w-4" />
+							</div>
+							<span className="text-sm font-medium truncate">
 								{user.displayName}
 							</span>
 						</div>
 						<Button
 							onClick={handleSignOut}
-							variant="destructive"
-							size="sm"
-							className="w-full"
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
 						>
-							<LogOut className="mr-2 h-4 w-4" />
-							Sign Out
+							<LogOut className="h-4 w-4" />
 						</Button>
 					</div>
 				) : (
 					<Button
 						onClick={handleGoogleLogin}
+						variant="outline"
 						size="sm"
 						className="w-full"
 					>
 						<LogIn className="mr-2 h-4 w-4" />
-						Sign in with Google
+						Sign in
 					</Button>
 				)}
 			</SidebarFooter>
