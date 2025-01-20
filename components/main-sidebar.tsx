@@ -50,31 +50,9 @@ export function MainSidebar() {
 							asChild
 							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
 						>
-							<a href="/">
-								<Home className="h-4 w-4" />
-								<span>Home</span>
-							</a>
-						</SidebarMenuButton>
-					</SidebarMenuItem>
-					<SidebarMenuItem>
-						<SidebarMenuButton
-							asChild
-							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
-						>
 							<a href="/uploader">
 								<Upload className="h-4 w-4" />
 								<span>Uploader</span>
-							</a>
-						</SidebarMenuButton>
-					</SidebarMenuItem>
-					<SidebarMenuItem>
-						<SidebarMenuButton
-							asChild
-							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
-						>
-							<a href="/settings">
-								<Settings className="h-4 w-4" />
-								<span>Settings</span>
 							</a>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
