@@ -25,9 +25,17 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { CreateButton } from "@/components/ui/create-button";
-import { OrganizerData, Exam, Section, Topic } from "@/types/organizer";
+import {
+	OrganizerData,
+	Exam,
+	Section,
+	Topic,
+	Language,
+} from "@/types/organizer";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 function isExamArray(data: any): data is OrganizerData {
 	return data && Array.isArray(data.exams);
@@ -43,6 +51,13 @@ export function MainSidebar() {
 		createSection,
 		createTopic,
 	} = useOrganizerStore();
+
+	const [selectedLanguage, setSelectedLanguage] =
+		useState<Language>("english");
+
+	const [selectedLanguages, setSelectedLanguages] = useState<{
+		[examId: string]: Language;
+	}>({});
 
 	useEffect(() => {
 		fetchData();
@@ -82,6 +97,63 @@ export function MainSidebar() {
 					/>
 				),
 				children: [
+					{
+						id: `${exam.name
+							.toLowerCase()
+							.replace(/\s+/g, "")}-language-selector`,
+						name: "Language Selection",
+						icon: Book,
+						customContent: (
+							<div className="p-2">
+								<RadioGroup
+									value={
+										selectedLanguages[
+											exam.name
+												.toLowerCase()
+												.replace(/\s+/g, "")
+										] || "english"
+									}
+									onValueChange={(value) =>
+										setSelectedLanguages((prev) => ({
+											...prev,
+											[exam.name
+												.toLowerCase()
+												.replace(/\s+/g, "")]:
+												value as Language,
+										}))
+									}
+								>
+									<div className="flex items-center space-x-2">
+										<RadioGroupItem
+											value="english"
+											id={`${exam.name}-english`}
+										/>
+										<Label htmlFor={`${exam.name}-english`}>
+											English
+										</Label>
+									</div>
+									<div className="flex items-center space-x-2">
+										<RadioGroupItem
+											value="bengali"
+											id={`${exam.name}-bengali`}
+										/>
+										<Label htmlFor={`${exam.name}-bengali`}>
+											Bengali
+										</Label>
+									</div>
+									<div className="flex items-center space-x-2">
+										<RadioGroupItem
+											value="hindi"
+											id={`${exam.name}-hindi`}
+										/>
+										<Label htmlFor={`${exam.name}-hindi`}>
+											Hindi
+										</Label>
+									</div>
+								</RadioGroup>
+							</div>
+						),
+					},
 					{
 						id: exam.full_mock,
 						name: "Full Mock",
@@ -250,6 +322,31 @@ export function MainSidebar() {
 							Exam Categories
 						</h3>
 						<CreateButton type="exam" onSubmit={handleCreateExam} />
+					</div>
+					<div className="mb-4 space-y-3">
+						<h4 className="text-sm font-medium text-muted-foreground">
+							Select Language
+						</h4>
+						<RadioGroup
+							value={selectedLanguage}
+							onValueChange={(value) =>
+								setSelectedLanguage(value as Language)
+							}
+							className="flex flex-col space-y-1"
+						>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="english" id="english" />
+								<Label htmlFor="english">English</Label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="bengali" id="bengali" />
+								<Label htmlFor="bengali">Bengali</Label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="hindi" id="hindi" />
+								<Label htmlFor="hindi">Hindi</Label>
+							</div>
+						</RadioGroup>
 					</div>
 					<TreeView
 						data={treeData}

@@ -1,3 +1,5 @@
+export type Language = "english" | "bengali" | "hindi";
+
 export interface Topic {
 	name: string;
 	no_of_questions: number;
