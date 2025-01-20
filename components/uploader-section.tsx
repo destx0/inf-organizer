@@ -118,39 +118,32 @@ export function UploaderSection() {
 							icon: Book,
 							isLeaf: true,
 						},
-						{
-							id: `${exam.name
-								.toLowerCase()
-								.replace(/\s+/g, "")}-divider`,
-							name: "Sections",
+						...exam.sections.map((section: Section) => ({
+							id: section.section_batchid,
+							name: section.name,
 							icon: Book,
-							isSection: true,
-							children: exam.sections.map((section: Section) => ({
-								id: section.section_batchid,
-								name: section.name,
-								actions: (
-									<CreateButton
-										type="topic"
-										onSubmit={(name) =>
-											handleCreateTopic(
-												exam.name
-													.toLowerCase()
-													.replace(/\s+/g, ""),
-												section.section_batchid,
-												name
-											)
-										}
-										parentName={section.name}
-									/>
-								),
-								children: section.topics.map(
-									(topic: Topic) => ({
-										id: topic.topic_batchid,
-										name: `${topic.name} (${topic.no_of_questions})`,
-									})
-								),
-							})),
-						},
+							actions: (
+								<CreateButton
+									type="topic"
+									onSubmit={(name) =>
+										handleCreateTopic(
+											exam.name
+												.toLowerCase()
+												.replace(/\s+/g, ""),
+											section.section_batchid,
+											name
+										)
+									}
+									parentName={section.name}
+								/>
+							),
+							children: section.topics.map(
+								(topic: Topic) => ({
+									id: topic.topic_batchid,
+									name: `${topic.name} (${topic.no_of_questions})`,
+								})
+							),
+						})),
 					],
 				};
 		  })
@@ -158,7 +151,7 @@ export function UploaderSection() {
 
 	return (
 		<div className="">
-			<Separator className="my-4" />
+			<Separator className="mb-4" />
 			<div className="mb-4 space-y-2">
 				<h4 className="text-sm font-medium text-muted-foreground">
 					Select Language
