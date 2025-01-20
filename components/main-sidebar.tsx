@@ -27,8 +27,9 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { useEffect, useCallback } from "react";
 import { CreateButton } from "@/components/ui/create-button";
+import { OrganizerData, Exam, Section, Topic } from "@/types/organizer";
 
-function isExamArray(data: any): data is { exams: any[] } {
+function isExamArray(data: any): data is OrganizerData {
 	return data && Array.isArray(data.exams);
 }
 
@@ -64,87 +65,122 @@ export function MainSidebar() {
 	};
 
 	const treeData = isExamArray(data)
-		? data.exams.map((exam) => ({
-				id: exam.id,
+		? data.exams.map((exam: Exam) => ({
+				id: exam.name.toLowerCase().replace(/\s+/g, ""),
 				name: exam.name,
 				icon: Book,
 				actions: (
 					<CreateButton
 						type="section"
-						onSubmit={(name) => handleCreateSection(exam.id, name)}
+						onSubmit={(name) =>
+							handleCreateSection(
+								exam.name.toLowerCase().replace(/\s+/g, ""),
+								name
+							)
+						}
 						parentName={exam.name}
 					/>
 				),
-				children: (exam.sections || []).map((section) => ({
-					id: section.section_batchid,
-					name: section.name,
-					actions: (
-						<CreateButton
-							type="topic"
-							onSubmit={(name) =>
-								handleCreateTopic(
-									exam.id,
-									section.section_batchid,
-									name
-								)
-							}
-							parentName={section.name}
-						/>
-					),
-					children: (section.topics || []).map((topic) => ({
-						id: topic.topic_batchid,
-						name: `${topic.name} (${topic.no_of_questions})`,
-					})),
-				})),
+				children: [
+					{
+						id: exam.full_mock,
+						name: "Full Mock",
+						icon: Book,
+						isLeaf: true,
+					},
+					{
+						id: exam.pyqs,
+						name: "PYQ",
+						icon: Book,
+						isLeaf: true,
+					},
+					{
+						id: `${exam.name
+							.toLowerCase()
+							.replace(/\s+/g, "")}-divider`,
+						name: "Sections",
+						icon: Book,
+						isSection: true,
+						children: exam.sections.map((section: Section) => ({
+							id: section.section_batchid,
+							name: section.name,
+							actions: (
+								<CreateButton
+									type="topic"
+									onSubmit={(name) =>
+										handleCreateTopic(
+											exam.name
+												.toLowerCase()
+												.replace(/\s+/g, ""),
+											section.section_batchid,
+											name
+										)
+									}
+									parentName={section.name}
+								/>
+							),
+							children: section.topics.map((topic: Topic) => ({
+								id: topic.topic_batchid,
+								name: `${topic.name} (${topic.no_of_questions})`,
+							})),
+						})),
+					},
+				],
 		  }))
 		: [];
 
 	const handleNodeClick = useCallback(
 		(nodeId: string) => {
-			// Check if it's a section or topic
-			const isValidNode = data?.exams?.some((exam: any) =>
-				Object.values(exam.sections || {}).some(
+			// Check if it's a section, topic, full mock, or pyq
+			const isValidNode = data?.exams?.some((exam: any) => {
+				// Check if it's a full mock or pyq
+				if (exam.full_mock === nodeId || exam.pyqs === nodeId) {
+					return true;
+				}
+
+				// Check if it's a section or topic
+				return (exam.sections || []).some(
 					(section: any) =>
 						section.section_batchid === nodeId || // Check if it's a section
 						(section.topics || []).some(
 							(topic: any) => topic.topic_batchid === nodeId
 						) // Check if it's a topic
-				)
-			);
+				);
+			});
 
 			// Add more detailed console.log for debugging
 			console.log({
 				nodeId,
 				isValidNode,
-				sections: data?.exams?.flatMap((exam) =>
-					Object.values(exam.sections || {}).map((section) => ({
+				sections: data?.exams?.flatMap((exam) => [
+					{
+						id: exam.full_mock,
+						name: "Full Mock",
+						type: "full_mock",
+					},
+					{
+						id: exam.pyqs,
+						name: "PYQ",
+						type: "pyq",
+					},
+					...(exam.sections || []).map((section) => ({
 						id: section.section_batchid,
 						name: section.name,
+						type: "section",
 						topics: (section.topics || []).map((topic) => ({
 							id: topic.topic_batchid,
 							name: topic.name,
+							type: "topic",
 						})),
-					}))
-				),
-				treeData: treeData.flatMap((exam) =>
-					exam.children.flatMap((section) => [
-						{
-							id: section.id,
-							name: section.name,
-						},
-						...(section.children?.map((topic) => ({
-							id: topic.id,
-							name: topic.name,
-						})) || []),
-					])
-				),
+					})),
+				]),
 			});
 
 			if (isValidNode) {
 				setSelectedId(nodeId);
 			}
 		},
-		[data, setSelectedId, treeData]
+		[data, setSelectedId]
 	);
 
 	const handleGoogleLogin = async () => {

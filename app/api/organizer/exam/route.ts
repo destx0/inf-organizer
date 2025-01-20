@@ -7,6 +7,7 @@ import {
 	setDoc,
 	writeBatch,
 } from "firebase/firestore";
+import { Exam } from "@/types/organizer";
 
 export async function POST(request: Request) {
 	try {
@@ -27,14 +28,16 @@ export async function POST(request: Request) {
 		});
 
 		// Create the exam document with the new structure
-		const examId = name.toLowerCase().replace(/\s+/g, ""); // e.g., "cgl", "chsl"
-		await setDoc(doc(db, "organizer", examId), {
-			name: name,
+		const examId = name.toLowerCase().replace(/\s+/g, "");
+		const newExam: Exam = {
+			name,
 			full_mock: fullMockBatchRef.id,
 			pyqs: pyqsBatchRef.id,
 			sections: [],
 			createdAt: new Date(),
-		});
+		};
+
+		await setDoc(doc(db, "organizer", examId), newExam);
 
 		return NextResponse.json({
 			success: true,

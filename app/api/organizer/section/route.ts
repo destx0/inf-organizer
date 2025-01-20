@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import {
-	collection,
-	addDoc,
-	doc,
-	getDoc,
-	updateDoc,
-	arrayUnion,
-} from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { Exam, Section } from "@/types/organizer";
 
 export async function POST(request: Request) {
 	try {
 		const { examId, name } = await request.json();
-		console.log("Received request:", { examId, name }); // Debug log
+		console.log("Received request:", { examId, name });
 
 		// Create a temporary batch ID for the section
 		const sectionBatchRef = await addDoc(collection(db, "tmpbatches"), {
@@ -33,15 +27,15 @@ export async function POST(request: Request) {
 			);
 		}
 
-		const examData = examDoc.data();
-		console.log("Current exam data:", examData); // Debug log
+		const examData = examDoc.data() as Exam;
+		console.log("Current exam data:", examData);
 
 		// Add the new section to the sections array
-		const newSection = {
+		const newSection: Section = {
 			name,
 			section_batchid: sectionBatchRef.id,
-			createdAt: new Date(),
 			topics: [],
+			createdAt: new Date(),
 		};
 
 		const currentSections = examData.sections || [];
