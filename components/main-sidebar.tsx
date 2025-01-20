@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { useEffect, useCallback } from "react";
+import { CreateButton } from "@/components/ui/create-button";
 
 function isExamArray(data: any): data is { exams: any[] } {
 	return data && Array.isArray(data.exams);
@@ -33,27 +34,68 @@ function isExamArray(data: any): data is { exams: any[] } {
 
 export function MainSidebar() {
 	const user = useAuthStore((state) => state.user);
-	const { data, fetchData, setSelectedId } = useOrganizerStore();
+	const {
+		data,
+		fetchData,
+		setSelectedId,
+		createExam,
+		createSection,
+		createTopic,
+	} = useOrganizerStore();
 
 	useEffect(() => {
 		fetchData();
 	}, [fetchData]);
 
+	const handleCreateExam = async (name: string) => {
+		await createExam(name);
+	};
+
+	const handleCreateSection = async (examId: string, name: string) => {
+		await createSection(examId, name);
+	};
+
+	const handleCreateTopic = async (
+		examId: string,
+		sectionId: string,
+		name: string
+	) => {
+		await createTopic(examId, sectionId, name);
+	};
+
 	const treeData = isExamArray(data)
 		? data.exams.map((exam) => ({
-				id: exam.full_mock,
+				id: exam.id,
 				name: exam.name,
 				icon: Book,
-				children: Object.entries(exam.sections).map(
-					([key, section]) => ({
-						id: section.section_batchid,
-						name: section.name,
-						children: section.topics.map((topic) => ({
-							id: topic.topic_batchid,
-							name: `${topic.name} (${topic.no_of_questions})`,
-						})),
-					})
+				actions: (
+					<CreateButton
+						type="section"
+						onSubmit={(name) => handleCreateSection(exam.id, name)}
+						parentName={exam.name}
+					/>
 				),
+				children: (exam.sections || []).map((section) => ({
+					id: section.section_batchid,
+					name: section.name,
+					actions: (
+						<CreateButton
+							type="topic"
+							onSubmit={(name) =>
+								handleCreateTopic(
+									exam.id,
+									section.section_batchid,
+									name
+								)
+							}
+							parentName={section.name}
+						/>
+					),
+					children: (section.topics || []).map((topic) => ({
+						id: topic.topic_batchid,
+						name: `${topic.name} (${topic.no_of_questions})`,
+					})),
+				})),
 		  }))
 		: [];
 
@@ -61,10 +103,10 @@ export function MainSidebar() {
 		(nodeId: string) => {
 			// Check if it's a section or topic
 			const isValidNode = data?.exams?.some((exam: any) =>
-				Object.values(exam.sections).some(
+				Object.values(exam.sections || {}).some(
 					(section: any) =>
 						section.section_batchid === nodeId || // Check if it's a section
-						section.topics.some(
+						(section.topics || []).some(
 							(topic: any) => topic.topic_batchid === nodeId
 						) // Check if it's a topic
 				)
@@ -75,10 +117,10 @@ export function MainSidebar() {
 				nodeId,
 				isValidNode,
 				sections: data?.exams?.flatMap((exam) =>
-					Object.values(exam.sections).map((section) => ({
+					Object.values(exam.sections || {}).map((section) => ({
 						id: section.section_batchid,
 						name: section.name,
-						topics: section.topics.map((topic) => ({
+						topics: (section.topics || []).map((topic) => ({
 							id: topic.topic_batchid,
 							name: topic.name,
 						})),
@@ -167,9 +209,12 @@ export function MainSidebar() {
 				</SidebarMenu>
 
 				<div className="mt-6 px-4">
-					<h3 className="mb-4 text-sm font-medium text-muted-foreground">
-						Exam Categories
-					</h3>
+					<div className="flex items-center justify-between mb-4">
+						<h3 className="text-sm font-medium text-muted-foreground">
+							Exam Categories
+						</h3>
+						<CreateButton type="exam" onSubmit={handleCreateExam} />
+					</div>
 					<TreeView
 						data={treeData}
 						className="[&>li]:pl-0"
