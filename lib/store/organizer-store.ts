@@ -26,21 +26,33 @@ export const useOrganizerStore = create<OrganizerStore>((set, get) => ({
 	error: null,
 	fetchData: async () => {
 		try {
+			console.log("Starting to fetch data..."); // Debug log
 			set({ isLoading: true, error: null });
 
-			// Get all exam documents from the organizer collection
 			const querySnapshot = await getDocs(collection(db, "organizer"));
+			console.log(
+				"Raw Firestore data:",
+				querySnapshot.docs.map((doc) => ({
+					id: doc.id,
+					data: doc.data(),
+				}))
+			); // Debug log
 
-			// Transform the data to match the expected format
 			const exams = querySnapshot.docs.map((doc) => ({
 				...doc.data(),
 				id: doc.id,
 			}));
 
+			console.log("Processed exams data:", exams); // Debug log
+
 			set({
 				data: { exams },
 				isLoading: false,
 			});
+
+			// Log the state after update
+			const state = get();
+			console.log("Store state after update:", state.data);
 		} catch (error) {
 			console.error("Error fetching data:", error);
 			set({

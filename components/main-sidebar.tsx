@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
 	Sidebar,
 	SidebarContent,
@@ -11,249 +9,15 @@ import {
 	SidebarMenuItem,
 	SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { TreeView } from "@/components/tree-view";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import {
-	Home,
-	LogIn,
-	LogOut,
-	Settings,
-	Upload,
-	User,
-	Book,
-} from "lucide-react";
+import { Home, LogIn, LogOut, Settings, Upload, User } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useOrganizerStore } from "@/lib/store/organizer-store";
-import { useEffect, useCallback, useState } from "react";
-import { CreateButton } from "@/components/ui/create-button";
-import {
-	OrganizerData,
-	Exam,
-	Section,
-	Topic,
-	Language,
-} from "@/types/organizer";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-
-function isExamArray(data: any): data is OrganizerData {
-	return data && Array.isArray(data.exams);
-}
+import { Button } from "@/components/ui/button";
+import { UploaderSection } from "@/components/uploader-section";
 
 export function MainSidebar() {
 	const user = useAuthStore((state) => state.user);
-	const {
-		data,
-		fetchData,
-		setSelectedId,
-		createExam,
-		createSection,
-		createTopic,
-	} = useOrganizerStore();
-
-	const [selectedLanguage, setSelectedLanguage] =
-		useState<Language>("english");
-
-	const [selectedLanguages, setSelectedLanguages] = useState<{
-		[examId: string]: Language;
-	}>({});
-
-	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
-
-	const handleCreateExam = async (name: string) => {
-		await createExam(name);
-	};
-
-	const handleCreateSection = async (examId: string, name: string) => {
-		await createSection(examId, name);
-	};
-
-	const handleCreateTopic = async (
-		examId: string,
-		sectionId: string,
-		name: string
-	) => {
-		await createTopic(examId, sectionId, name);
-	};
-
-	const treeData = isExamArray(data)
-		? data.exams.map((exam: Exam) => ({
-				id: exam.name.toLowerCase().replace(/\s+/g, ""),
-				name: exam.name,
-				icon: Book,
-				actions: (
-					<CreateButton
-						type="section"
-						onSubmit={(name) =>
-							handleCreateSection(
-								exam.name.toLowerCase().replace(/\s+/g, ""),
-								name
-							)
-						}
-						parentName={exam.name}
-					/>
-				),
-				children: [
-					{
-						id: `${exam.name
-							.toLowerCase()
-							.replace(/\s+/g, "")}-language-selector`,
-						name: "Language Selection",
-						icon: Book,
-						customContent: (
-							<div className="p-2">
-								<RadioGroup
-									value={
-										selectedLanguages[
-											exam.name
-												.toLowerCase()
-												.replace(/\s+/g, "")
-										] || "english"
-									}
-									onValueChange={(value) =>
-										setSelectedLanguages((prev) => ({
-											...prev,
-											[exam.name
-												.toLowerCase()
-												.replace(/\s+/g, "")]:
-												value as Language,
-										}))
-									}
-								>
-									<div className="flex items-center space-x-2">
-										<RadioGroupItem
-											value="english"
-											id={`${exam.name}-english`}
-										/>
-										<Label htmlFor={`${exam.name}-english`}>
-											English
-										</Label>
-									</div>
-									<div className="flex items-center space-x-2">
-										<RadioGroupItem
-											value="bengali"
-											id={`${exam.name}-bengali`}
-										/>
-										<Label htmlFor={`${exam.name}-bengali`}>
-											Bengali
-										</Label>
-									</div>
-									<div className="flex items-center space-x-2">
-										<RadioGroupItem
-											value="hindi"
-											id={`${exam.name}-hindi`}
-										/>
-										<Label htmlFor={`${exam.name}-hindi`}>
-											Hindi
-										</Label>
-									</div>
-								</RadioGroup>
-							</div>
-						),
-					},
-					{
-						id: exam.full_mock,
-						name: "Full Mock",
-						icon: Book,
-						isLeaf: true,
-					},
-					{
-						id: exam.pyqs,
-						name: "PYQ",
-						icon: Book,
-						isLeaf: true,
-					},
-					{
-						id: `${exam.name
-							.toLowerCase()
-							.replace(/\s+/g, "")}-divider`,
-						name: "Sections",
-						icon: Book,
-						isSection: true,
-						children: exam.sections.map((section: Section) => ({
-							id: section.section_batchid,
-							name: section.name,
-							actions: (
-								<CreateButton
-									type="topic"
-									onSubmit={(name) =>
-										handleCreateTopic(
-											exam.name
-												.toLowerCase()
-												.replace(/\s+/g, ""),
-											section.section_batchid,
-											name
-										)
-									}
-									parentName={section.name}
-								/>
-							),
-							children: section.topics.map((topic: Topic) => ({
-								id: topic.topic_batchid,
-								name: `${topic.name} (${topic.no_of_questions})`,
-							})),
-						})),
-					},
-				],
-		  }))
-		: [];
-
-	const handleNodeClick = useCallback(
-		(nodeId: string) => {
-			// Check if it's a section, topic, full mock, or pyq
-			const isValidNode = data?.exams?.some((exam: any) => {
-				// Check if it's a full mock or pyq
-				if (exam.full_mock === nodeId || exam.pyqs === nodeId) {
-					return true;
-				}
-
-				// Check if it's a section or topic
-				return (exam.sections || []).some(
-					(section: any) =>
-						section.section_batchid === nodeId || // Check if it's a section
-						(section.topics || []).some(
-							(topic: any) => topic.topic_batchid === nodeId
-						) // Check if it's a topic
-				);
-			});
-
-			// Add more detailed console.log for debugging
-			console.log({
-				nodeId,
-				isValidNode,
-				sections: data?.exams?.flatMap((exam) => [
-					{
-						id: exam.full_mock,
-						name: "Full Mock",
-						type: "full_mock",
-					},
-					{
-						id: exam.pyqs,
-						name: "PYQ",
-						type: "pyq",
-					},
-					...(exam.sections || []).map((section) => ({
-						id: section.section_batchid,
-						name: section.name,
-						type: "section",
-						topics: (section.topics || []).map((topic) => ({
-							id: topic.topic_batchid,
-							name: topic.name,
-							type: "topic",
-						})),
-					})),
-				]),
-			});
-
-			if (isValidNode) {
-				setSelectedId(nodeId);
-			}
-		},
-		[data, setSelectedId]
-	);
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -316,43 +80,8 @@ export function MainSidebar() {
 					</SidebarMenuItem>
 				</SidebarMenu>
 
-				<div className="mt-6 px-4">
-					<div className="flex items-center justify-between mb-4">
-						<h3 className="text-sm font-medium text-muted-foreground">
-							Exam Categories
-						</h3>
-						<CreateButton type="exam" onSubmit={handleCreateExam} />
-					</div>
-					<div className="mb-4 space-y-3">
-						<h4 className="text-sm font-medium text-muted-foreground">
-							Select Language
-						</h4>
-						<RadioGroup
-							value={selectedLanguage}
-							onValueChange={(value) =>
-								setSelectedLanguage(value as Language)
-							}
-							className="flex flex-col space-y-1"
-						>
-							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="english" id="english" />
-								<Label htmlFor="english">English</Label>
-							</div>
-							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="bengali" id="bengali" />
-								<Label htmlFor="bengali">Bengali</Label>
-							</div>
-							<div className="flex items-center space-x-2">
-								<RadioGroupItem value="hindi" id="hindi" />
-								<Label htmlFor="hindi">Hindi</Label>
-							</div>
-						</RadioGroup>
-					</div>
-					<TreeView
-						data={treeData}
-						className="[&>li]:pl-0"
-						onNodeClick={handleNodeClick}
-					/>
+				<div className=" px-4">
+					<UploaderSection />
 				</div>
 			</SidebarContent>
 			<SidebarFooter className="border-t p-4">
