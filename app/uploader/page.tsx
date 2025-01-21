@@ -7,9 +7,12 @@ import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileInput } from "@/components/ui/file-input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import confetti from "canvas-confetti";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useRouter } from "next/navigation";
 
 export default function UploaderPage() {
 	const { files, isUploading, progress, setFiles, handleUpload } =
@@ -18,6 +21,14 @@ export default function UploaderPage() {
 	const { data, selectedId } = useOrganizerStore();
 	const [uploadedDocId, setUploadedDocId] = useState<string | null>(null);
 	const [isDownloading, setIsDownloading] = useState(false);
+	const router = useRouter();
+	const { user } = useAuthStore();
+
+	useEffect(() => {
+		if (!user) {
+			router.push("/login"); // Redirect to login if not authenticated
+		}
+	}, [user, router]);
 
 	// Find the selected node and its type
 	const getSelectedNode = () => {
@@ -116,6 +127,13 @@ export default function UploaderPage() {
 					setUploadedDocId(result);
 				}
 			}
+
+			// Show confetti on successful upload
+			confetti({
+				particleCount: 100,
+				spread: 70,
+				origin: { y: 0.6 },
+			});
 		} catch (error) {
 			console.error("Upload failed:", error);
 		}
@@ -150,13 +168,15 @@ export default function UploaderPage() {
 		}
 	};
 
+	// If not authenticated, don't render the page content
+	if (!user) {
+		return null;
+	}
+
 	return (
 		<div className="container mx-auto max-w-2xl space-y-6">
 			<div className="space-y-2">
-				<h1 className="text-3xl font-bold">Content Uploader</h1>
-				<p className="text-muted-foreground">
-					Upload and organize your exam content.
-				</p>
+				<h1 className="text-xl font-bold">Content Uploader</h1>
 			</div>
 
 			{selectedNode ? (

@@ -15,17 +15,21 @@ import { TreeView } from "@/components/tree-view";
 import { CreateButton } from "@/components/ui/create-button";
 import { useCallback, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useRouter } from "next/navigation";
 
 function isExamArray(data: any): data is OrganizerData {
 	return data && Array.isArray(data.exams);
 }
 
 export function UploaderSection() {
+	const router = useRouter();
+	const { user } = useAuthStore();
 	const { selectedLanguage, setSelectedLanguage } = useUploaderStore();
 
 	const {
 		data,
-		
+
 		setSelectedId,
 		createExam,
 		createSection,
@@ -36,9 +40,13 @@ export function UploaderSection() {
 	} = useOrganizerStore();
 
 	useEffect(() => {
+		if (!user) {
+			router.push("/login");
+			return;
+		}
 		console.log("UploaderSection mounted, fetching data...");
 		fetchData();
-	}, [fetchData]);
+	}, [fetchData, user, router]);
 
 	useEffect(() => {
 		console.log("Data changed:", data);
@@ -143,6 +151,11 @@ export function UploaderSection() {
 				],
 		  }))
 		: [];
+
+	// If not authenticated, don't render the component
+	if (!user) {
+		return null;
+	}
 
 	return (
 		<div className="">
