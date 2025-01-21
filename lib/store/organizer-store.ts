@@ -75,6 +75,7 @@ export const useOrganizerStore = create<OrganizerStore>((set, get) => ({
 			if (!response.ok) throw new Error("Failed to create exam");
 			await get().fetchData();
 		} catch (error) {
+			console.error("Error creating exam:", error);
 			set({ error: "Failed to create exam", isLoading: false });
 		}
 	},
@@ -111,6 +112,7 @@ export const useOrganizerStore = create<OrganizerStore>((set, get) => ({
 			if (!response.ok) throw new Error("Failed to create topic");
 			await get().fetchData();
 		} catch (error) {
+			console.error("Error creating topic:", error);
 			set({ error: "Failed to create topic", isLoading: false });
 		}
 	},

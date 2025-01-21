@@ -14,13 +14,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let firebase_app =
+const firebase_app =
 	getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const auth = getAuth(firebase_app);
 export const db = getFirestore(firebase_app);
 
-// Only initialize analytics on the client side
 if (typeof window !== "undefined") {
 	getAnalytics(firebase_app);
 }

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { Home, LogIn, LogOut, Settings, Upload, User } from "lucide-react";
+import { LogIn, LogOut, Upload, User } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { UploaderSection } from "@/components/uploader-section";

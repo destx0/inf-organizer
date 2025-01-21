@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Upload, Download } from "lucide-react";
 import { useUploaderStore } from "@/lib/store/uploader-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";

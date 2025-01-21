@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import {
-	collection,
-	addDoc,
-	doc,
-	setDoc,
-	writeBatch,
-} from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { Exam } from "@/types/organizer";
 
 function generateBatchId(examName: string, type: string): string {
@@ -23,7 +17,6 @@ function generateBatchId(examName: string, type: string): string {
 export async function POST(request: Request) {
 	try {
 		const { name } = await request.json();
-		const batch = writeBatch(db);
 
 		// Generate human-readable batch IDs
 		const fullMockBatchId = generateBatchId(name, "full_mock");

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useUploaderStore } from "@/lib/store/uploader-store";
@@ -13,7 +14,6 @@ import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { TreeView } from "@/components/tree-view";
 import { CreateButton } from "@/components/ui/create-button";
 import { useCallback, useEffect } from "react";
-import { log } from "console";
 import { Separator } from "@/components/ui/separator";
 
 function isExamArray(data: any): data is OrganizerData {
@@ -25,7 +25,7 @@ export function UploaderSection() {
 
 	const {
 		data,
-		selectedId,
+		
 		setSelectedId,
 		createExam,
 		createSection,

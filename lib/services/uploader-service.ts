@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/lib/firebase";
 import { collection, doc, getDoc, setDoc, addDoc } from "firebase/firestore";
 
@@ -217,6 +218,7 @@ export class UploaderService {
 					const jsonData = JSON.parse(event.target?.result as string);
 					resolve(jsonData);
 				} catch (error) {
+					console.error("Error parsing JSON file:", error);
 					reject(new Error("Invalid JSON file"));
 				}
 			};
