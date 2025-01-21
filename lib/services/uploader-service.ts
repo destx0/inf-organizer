@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "@/lib/firebase";
 import { collection, doc, getDoc, setDoc, addDoc } from "firebase/firestore";
@@ -51,6 +52,28 @@ interface BatchMetadata {
 	examId: string;
 	totalQuizzes: number;
 	quizzes: QuizMetadata[];
+}
+
+interface QuizQuestion {
+	question: string;
+	options: string[];
+	correctAnswer: number;
+	explanation: string;
+}
+
+interface QuizSection {
+	name: string;
+	questions: QuizQuestion[];
+}
+
+interface QuizContent {
+	title: string;
+	description?: string;
+	duration?: number;
+	negativeScore?: number;
+	positiveScore?: number;
+	thumbnailLink?: string;
+	sections: QuizSection[];
 }
 
 export class UploaderService {
@@ -177,28 +200,22 @@ export class UploaderService {
 		}
 	}
 
-	private static validateQuizStructure(quiz: any): boolean {
-		// Basic structure validation
+	private static validateQuizStructure(quiz: QuizContent): boolean {
 		if (!quiz || typeof quiz !== "object") return false;
 
-		// Check for required fields with flexible content
 		const requiredFields = ["title", "sections"];
-
 		const hasRequiredFields = requiredFields.every(
 			(field) => field in quiz
 		);
 		if (!hasRequiredFields) return false;
 
-		// Validate sections array
 		if (!Array.isArray(quiz.sections)) return false;
 
-		// Basic section validation
-		return quiz.sections.every((section: any) => {
+		return quiz.sections.every((section: QuizSection) => {
 			if (!section.name || !Array.isArray(section.questions))
 				return false;
 
-			// Basic question validation
-			return section.questions.every((question: any) => {
+			return section.questions.every((question: QuizQuestion) => {
 				return (
 					question.question !== undefined &&
 					Array.isArray(question.options) &&
@@ -209,13 +226,15 @@ export class UploaderService {
 		});
 	}
 
-	private static async readJsonFile(file: File): Promise<any> {
+	private static async readJsonFile(file: File): Promise<QuizContent> {
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader();
 
 			reader.onload = (event) => {
 				try {
-					const jsonData = JSON.parse(event.target?.result as string);
+					const jsonData = JSON.parse(
+						event.target?.result as string
+					) as QuizContent;
 					resolve(jsonData);
 				} catch (error) {
 					console.error("Error parsing JSON file:", error);

@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { Button } from "./button";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -8,13 +8,6 @@ import {
 	DialogTrigger,
 } from "./dialog";
 import { Input } from "./input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "./select";
 import { useState } from "react";
 
 interface CreateButtonProps {

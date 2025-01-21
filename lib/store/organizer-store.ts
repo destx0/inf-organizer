@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { create } from "zustand";
 import { Exam, OrganizerData } from "@/types/organizer";
 import { db } from "@/lib/firebase";
