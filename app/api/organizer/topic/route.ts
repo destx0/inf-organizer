@@ -3,11 +3,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { Exam, Topic } from "@/types/organizer";
 
-function generateTopicId(
-	examId: string,
-	sectionId: string,
-	topicName: string
-): string {
+function generateTopicId(sectionId: string, topicName: string): string {
 	const sanitizedName = topicName
 		.toLowerCase()
 		.replace(/[^a-z0-9]/g, "_")
@@ -22,7 +18,7 @@ export async function POST(request: Request) {
 		const { examId, sectionId, name } = await request.json();
 
 		// Generate a human-readable topic ID
-		const topicId = generateTopicId(examId, sectionId, name);
+		const topicId = generateTopicId(sectionId, name);
 
 		// Create a topic batch document
 		await setDoc(doc(db, "tmpbatches", topicId), {
