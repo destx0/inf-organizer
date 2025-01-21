@@ -66,7 +66,7 @@ export function UploaderSection() {
 			const isValidNode = data?.exams?.some((exam: any) => {
 				// Check if it's a full mock or pyq
 				if (exam.full_mock === nodeId || exam.pyqs === nodeId) {
-					return true;
+					return true; // Allow selection of full mock and pyq nodes
 				}
 
 				// Check if it's a section or topic
@@ -87,66 +87,61 @@ export function UploaderSection() {
 	);
 
 	const treeData = isExamArray(data)
-		? data.exams.map((exam: Exam) => {
-				console.log("Processing exam:", exam);
-				return {
-					id: exam.name.toLowerCase().replace(/\s+/g, ""),
-					name: exam.name,
-					icon: Book,
-					actions: (
-						<CreateButton
-							type="section"
-							onSubmit={(name) =>
-								handleCreateSection(
-									exam.name.toLowerCase().replace(/\s+/g, ""),
-									name
-								)
-							}
-							parentName={exam.name}
-						/>
-					),
-					children: [
-						{
-							id: exam.full_mock,
-							name: "Full Mock",
-							icon: Book,
-							isLeaf: true,
-						},
-						{
-							id: exam.pyqs,
-							name: "PYQ",
-							icon: Book,
-							isLeaf: true,
-						},
-						...exam.sections.map((section: Section) => ({
-							id: section.section_batchid,
-							name: section.name,
-							icon: Book,
-							actions: (
-								<CreateButton
-									type="topic"
-									onSubmit={(name) =>
-										handleCreateTopic(
-											exam.name
-												.toLowerCase()
-												.replace(/\s+/g, ""),
-											section.section_batchid,
-											name
-										)
-									}
-									parentName={section.name}
-								/>
-							),
-							children: section.topics.map(
-								(topic: Topic) => ({
-									id: topic.topic_batchid,
-									name: `${topic.name} (${topic.no_of_questions})`,
-								})
-							),
+		? data.exams.map((exam: Exam) => ({
+				id: exam.name.toLowerCase().replace(/\s+/g, ""),
+				name: exam.name,
+				icon: Book,
+				actions: (
+					<CreateButton
+						type="section"
+						onSubmit={(name) =>
+							handleCreateSection(
+								exam.name.toLowerCase().replace(/\s+/g, ""),
+								name
+							)
+						}
+						parentName={exam.name}
+					/>
+				),
+				children: [
+					{
+						id: exam.full_mock,
+						name: "Full Mock",
+						icon: Book,
+						isLeaf: true, // This makes it selectable
+					},
+					{
+						id: exam.pyqs,
+						name: "PYQ",
+						icon: Book,
+						isLeaf: true, // This makes it selectable
+					},
+					...exam.sections.map((section: Section) => ({
+						id: section.section_batchid,
+						name: section.name,
+						icon: Book,
+						actions: (
+							<CreateButton
+								type="topic"
+								onSubmit={(name) =>
+									handleCreateTopic(
+										exam.name
+											.toLowerCase()
+											.replace(/\s+/g, ""),
+										section.section_batchid,
+										name
+									)
+								}
+								parentName={section.name}
+							/>
+						),
+						children: section.topics.map((topic: Topic) => ({
+							id: topic.topic_batchid,
+							name: `${topic.name} (${topic.no_of_questions})`,
 						})),
-					],
-				};
-		  })
+					})),
+				],
+		  }))
 		: [];
 
 	return (

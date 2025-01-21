@@ -2,45 +2,69 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
-import { useUploadStore } from "@/lib/store/upload-store";
+import { Upload, Download } from "lucide-react";
+import { useUploaderStore } from "@/lib/store/uploader-store";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileInput } from "@/components/ui/file-input";
+import { useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function UploaderPage() {
-	const {
-		file,
-		isUploading,
-		progress,
-		setFile,
-		setIsUploading,
-		setProgress,
-		reset,
-	} = useUploadStore();
+	const { files, isUploading, progress, setFiles, handleUpload } =
+		useUploaderStore();
 
 	const { data, selectedId } = useOrganizerStore();
+	const [uploadedDocId, setUploadedDocId] = useState<string | null>(null);
+	const [isDownloading, setIsDownloading] = useState(false);
 
-	// Find the selected section or topic name
-	const selectedNode =
-		selectedId && data?.exams
-			? data.exams
-					.flatMap((exam) =>
-						Object.values(exam.sections).flatMap((section) => [
-							{
-								id: section.section_batchid,
-								name: section.name,
-								type: "section",
-							},
-							...section.topics.map((topic) => ({
-								id: topic.topic_batchid,
-								name: topic.name,
-								type: "topic",
-							})),
-						])
-					)
-					.find((node) => node.id === selectedId)
-			: null;
+	// Find the selected node and its type
+	const getSelectedNode = () => {
+		if (!selectedId || !data?.exams) return null;
+
+		for (const exam of data.exams) {
+			// Check if it's a full mock or pyq
+			if (exam.full_mock === selectedId) {
+				return {
+					id: selectedId,
+					name: `${exam.name} Full Mock`,
+					type: "full_mock",
+				};
+			}
+			if (exam.pyqs === selectedId) {
+				return {
+					id: selectedId,
+					name: `${exam.name} PYQ`,
+					type: "pyq",
+				};
+			}
+
+			// Check sections and topics
+			for (const section of exam.sections) {
+				if (section.section_batchid === selectedId) {
+					return {
+						id: selectedId,
+						name: section.name,
+						type: "section",
+					};
+				}
+				for (const topic of section.topics) {
+					if (topic.topic_batchid === selectedId) {
+						return {
+							id: selectedId,
+							name: topic.name,
+							type: "topic",
+						};
+					}
+				}
+			}
+		}
+		return null;
+	};
+
+	const selectedNode = getSelectedNode();
 
 	// Add console.log for debugging
 	console.log({
@@ -49,31 +73,78 @@ export default function UploaderPage() {
 		data: data?.exams,
 	});
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.files && e.target.files[0]) {
-			setFile(e.target.files[0]);
+	const handleFileChange = (files: FileList | null) => {
+		if (files) {
+			setFiles(Array.from(files));
 		}
 	};
 
-	const handleUpload = async () => {
-		if (!file) return;
+	const handleUploadClick = async () => {
+		if (!selectedNode || !selectedId || !files.length) return;
 
 		try {
-			setIsUploading(true);
-			// TODO: Implement file upload logic here with Firebase Storage
-			console.log("Uploading file:", file.name);
+			const examId =
+				data?.exams
+					.find(
+						(exam) =>
+							exam.full_mock === selectedId ||
+							exam.pyqs === selectedId ||
+							exam.sections.some(
+								(s) =>
+									s.section_batchid === selectedId ||
+									s.topics.some(
+										(t) => t.topic_batchid === selectedId
+									)
+							)
+					)
+					?.name.toLowerCase()
+					.replace(/\s+/g, "") || "";
 
-			// Simulate upload progress
-			for (let i = 0; i <= 100; i += 10) {
-				await new Promise((resolve) => setTimeout(resolve, 500));
-				setProgress(i);
+			// Upload all files and store the last document ID
+			for (const file of files) {
+				const docId = await handleUpload(
+					selectedId,
+					selectedNode.type as
+						| "section"
+						| "full_mock"
+						| "pyq"
+						| "topic",
+					examId,
+					file
+				);
+				setUploadedDocId(docId);
 			}
-
-			reset();
 		} catch (error) {
-			console.error("Error uploading file:", error);
+			console.error("Upload failed:", error);
+		}
+	};
+
+	const handleDownload = async () => {
+		if (!uploadedDocId) return;
+
+		try {
+			setIsDownloading(true);
+			const docRef = doc(db, "tmpQuizzes", uploadedDocId);
+			const docSnap = await getDoc(docRef);
+
+			if (docSnap.exists()) {
+				const data = docSnap.data();
+				const blob = new Blob([JSON.stringify(data, null, 2)], {
+					type: "application/json",
+				});
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				a.download = `${uploadedDocId}.json`;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
+		} catch (error) {
+			console.error("Download failed:", error);
 		} finally {
-			setIsUploading(false);
+			setIsDownloading(false);
 		}
 	};
 
@@ -96,36 +167,70 @@ export default function UploaderPage() {
 			) : (
 				<Alert variant="destructive">
 					<AlertDescription>
-						Please select a section or topic from the sidebar to
-						upload content
+						Please select a section, topic, full mock, or PYQ from
+						the sidebar to upload content
 					</AlertDescription>
 				</Alert>
 			)}
 
 			<div className="flex flex-col gap-4 rounded-lg border p-4">
-				<Input
-					type="file"
+				<FileInput
 					onChange={handleFileChange}
-					className="cursor-pointer"
 					disabled={isUploading || !selectedId}
+					accept=".json"
+					multiple={true}
 				/>
 				{isUploading && <Progress value={progress} />}
 				<Button
-					onClick={handleUpload}
-					disabled={!file || isUploading || !selectedId}
+					onClick={handleUploadClick}
+					disabled={!files.length || isUploading || !selectedId}
 					className="w-full"
 				>
 					<Upload className="mr-2 h-4 w-4" />
-					{isUploading ? "Uploading..." : "Upload File"}
+					{isUploading
+						? "Uploading..."
+						: `Upload ${files.length} File${
+								files.length !== 1 ? "s" : ""
+						  }`}
 				</Button>
 			</div>
 
-			{file && !isUploading && (
+			{files.length > 0 && !isUploading && (
 				<div className="rounded-lg border p-4">
-					<p className="font-medium">Selected file:</p>
-					<p className="text-sm text-muted-foreground">
-						{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-					</p>
+					<p className="font-medium">Selected files:</p>
+					<div className="space-y-2">
+						{files.map((file, index) => (
+							<p
+								key={index}
+								className="text-sm text-muted-foreground"
+							>
+								{file.name} (
+								{(file.size / 1024 / 1024).toFixed(2)} MB)
+							</p>
+						))}
+					</div>
+				</div>
+			)}
+
+			{uploadedDocId && (
+				<div className="rounded-lg border p-4 space-y-4">
+					<div className="space-y-2">
+						<p className="font-medium">Uploaded Document ID:</p>
+						<p className="text-sm font-mono bg-muted p-2 rounded">
+							{uploadedDocId}
+						</p>
+					</div>
+					<Button
+						onClick={handleDownload}
+						disabled={isDownloading}
+						variant="outline"
+						className="w-full"
+					>
+						<Download className="mr-2 h-4 w-4" />
+						{isDownloading
+							? "Downloading..."
+							: "Download Firebase Document"}
+					</Button>
 				</div>
 			)}
 		</div>
