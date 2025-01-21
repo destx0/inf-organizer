@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { OrganizerData } from "@/types/organizer";
+import { Exam, OrganizerData } from "@/types/organizer";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -46,7 +46,9 @@ export const useOrganizerStore = create<OrganizerStore>((set, get) => ({
 			console.log("Processed exams data:", exams); // Debug log
 
 			set({
-				data: { exams },
+				data: {
+					exams: exams as unknown as Exam[],
+				},
 				isLoading: false,
 			});
 

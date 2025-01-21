@@ -102,7 +102,7 @@ export default function UploaderPage() {
 
 			// Upload all files and store the last document ID
 			for (const file of files) {
-				const docId = await handleUpload(
+				const result = await handleUpload(
 					selectedId,
 					selectedNode.type as
 						| "section"
@@ -112,7 +112,10 @@ export default function UploaderPage() {
 					examId,
 					file
 				);
-				setUploadedDocId(docId);
+				// Only set the uploadedDocId if we got a string back
+				if (typeof result === "string") {
+					setUploadedDocId(result);
+				}
 			}
 		} catch (error) {
 			console.error("Upload failed:", error);
