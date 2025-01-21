@@ -1,17 +1,35 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { Exam, Topic } from "@/types/organizer";
+
+function generateTopicId(
+	examId: string,
+	sectionId: string,
+	topicName: string
+): string {
+	const sanitizedName = topicName
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, "_")
+		.replace(/_+/g, "_")
+		.replace(/^_|_$/g, "");
+
+	return `${sectionId}_topic_${sanitizedName}`;
+}
 
 export async function POST(request: Request) {
 	try {
 		const { examId, sectionId, name } = await request.json();
 
-		// Create a temporary batch ID for the topic
-		const topicBatchRef = await addDoc(collection(db, "tmpbatches"), {
+		// Generate a human-readable topic ID
+		const topicId = generateTopicId(examId, sectionId, name);
+
+		// Create a topic batch document
+		await setDoc(doc(db, "tmpbatches", topicId), {
 			type: "topic",
 			examId,
 			sectionId,
+			topicName: name,
 			createdAt: new Date(),
 		});
 
@@ -32,10 +50,10 @@ export async function POST(request: Request) {
 			throw new Error("Section not found");
 		}
 
-		// Add the new topic to the section's topics array
+		// Add the new topic
 		const newTopic: Topic = {
 			name,
-			topic_batchid: topicBatchRef.id,
+			topic_batchid: topicId,
 			no_of_questions: 0,
 			createdAt: new Date(),
 		};
@@ -49,7 +67,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({
 			success: true,
-			topicId: topicBatchRef.id,
+			topicId,
 		});
 	} catch (error) {
 		console.error("Error creating topic:", error);
