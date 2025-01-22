@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { LogIn, LogOut, Upload, User } from "lucide-react";
+import { Download, LogIn, LogOut, Upload, User } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { UploaderSection } from "@/components/uploader-section";
@@ -53,6 +53,17 @@ export function MainSidebar() {
 							<a href="/uploader">
 								<Upload className="h-4 w-4" />
 								<span>Uploader</span>
+							</a>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+					<SidebarMenuItem>
+						<SidebarMenuButton
+							asChild
+							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
+						>
+							<a href="/pdf-downloader">
+								<Download className="h-4 w-4" />
+								<span>PDF Downloader</span>
 							</a>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
