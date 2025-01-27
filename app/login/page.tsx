@@ -14,10 +14,7 @@ export default function LoginPage() {
 	useEffect(() => {
 		// If user is already logged in, redirect to uploader
 		if (user) {
-			// Get the redirect path from URL or default to uploader
-			const urlParams = new URLSearchParams(window.location.search);
-			const redirect = urlParams.get("redirect") || "/uploader";
-			router.push(redirect);
+			router.push("/uploader");
 		}
 	}, [user, router]);
 
@@ -25,10 +22,7 @@ export default function LoginPage() {
 		try {
 			const provider = new GoogleAuthProvider();
 			await signInWithPopup(auth, provider);
-			// Get the redirect path from URL or default to uploader
-			const urlParams = new URLSearchParams(window.location.search);
-			const redirect = urlParams.get("redirect") || "/uploader";
-			router.push(redirect);
+			router.push("/uploader"); // Redirect after successful login
 		} catch (error) {
 			console.error("Error signing in with Google:", error);
 		}

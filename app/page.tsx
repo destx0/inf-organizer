@@ -14,8 +14,7 @@ export default function Home() {
 	useEffect(() => {
 		// If user is logged in, redirect to uploader
 		if (user) {
-			// Don't automatically redirect
-			// router.push("/uploader");
+			router.push("/uploader");
 		}
 	}, [user, router]);
 
@@ -37,7 +36,11 @@ export default function Home() {
 		}
 	};
 
-	// Don't return null when user is logged in
+	// Don't render content if user is logged in (prevents flash)
+	if (user) {
+		return null;
+	}
+
 	return (
 		<div className="container mx-auto max-w-2xl min-h-screen flex flex-col items-center justify-center">
 			<div className="space-y-6 text-center">
@@ -49,39 +52,13 @@ export default function Home() {
 						Your comprehensive exam preparation companion.
 					</p>
 				</div>
-				{!user ? (
-					<Button
-						onClick={handleGoogleLogin}
-						size="lg"
-						className="min-w-[200px]"
-					>
-						Get Started
-					</Button>
-				) : (
-					<div className="space-y-4">
-						<div className="flex gap-4 justify-center">
-							<Button
-								onClick={() => router.push("/uploader")}
-								size="lg"
-							>
-								Go to Uploader
-							</Button>
-							<Button
-								onClick={() => router.push("/pdf-downloader")}
-								size="lg"
-							>
-								Go to PDF Downloader
-							</Button>
-						</div>
-						<Button
-							onClick={handleSignOut}
-							variant="outline"
-							size="lg"
-						>
-							Sign Out
-						</Button>
-					</div>
-				)}
+				<Button
+					onClick={handleGoogleLogin}
+					size="lg"
+					className="min-w-[200px]"
+				>
+					Get Started
+				</Button>
 			</div>
 		</div>
 	);
