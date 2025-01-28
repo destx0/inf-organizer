@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -25,14 +25,6 @@ export default function Home() {
 			router.push("/uploader");
 		} catch (error) {
 			console.error("Error signing in with Google:", error);
-		}
-	};
-
-	const handleSignOut = async () => {
-		try {
-			await signOut(auth);
-		} catch (error) {
-			console.error("Error signing out:", error);
 		}
 	};
 

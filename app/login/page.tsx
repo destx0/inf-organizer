@@ -3,14 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { getIntendedPath, clearIntendedPath } from "@/lib/utils/path-utils";
 
 export default function LoginPage() {
 	const router = useRouter();
-	const pathname = usePathname();
 	const { user } = useAuthStore();
 
 	useEffect(() => {
