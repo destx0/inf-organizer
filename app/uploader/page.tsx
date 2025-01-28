@@ -144,7 +144,7 @@ export default function UploaderPage() {
 
 		try {
 			setIsDownloading(true);
-			const docRef = doc(db, "tmpQuizzes", uploadedDocId);
+			const docRef = doc(db, "fullQuizzes", uploadedDocId);
 			const docSnap = await getDoc(docRef);
 
 			if (docSnap.exists()) {

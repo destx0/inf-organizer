@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 		const topicId = generateTopicId(sectionId, name);
 
 		// Create a topic batch document
-		await setDoc(doc(db, "tmpbatches", topicId), {
+		await setDoc(doc(db, "testBatches", topicId), {
 			type: "topic",
 			examId,
 			sectionId,

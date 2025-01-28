@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 		const sectionId = generateSectionId(examId, name);
 
 		// Create a section batch document
-		await setDoc(doc(db, "tmpbatches", sectionId), {
+		await setDoc(doc(db, "testBatches", sectionId), {
 			type: "section",
 			examId,
 			sectionName: name,

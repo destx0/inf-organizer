@@ -51,7 +51,7 @@ interface BatchMetadata {
 	updatedAt: Date;
 	examId: string;
 	totalQuizzes: number;
-	quizzes: QuizMetadata[];
+	examDetails: QuizMetadata[];
 }
 
 interface QuizQuestion {
@@ -170,7 +170,7 @@ export class UploaderService {
 			};
 
 			// Upload quiz data
-			await setDoc(doc(db, "tmpQuizzes", quizId), quizData);
+			await setDoc(doc(db, "fullQuizzes", quizId), quizData);
 
 			// Update batch metadata
 			const batchMetadata = {
@@ -267,7 +267,7 @@ export class UploaderService {
 	) {
 		try {
 			console.log("Starting batch metadata update for:", batchId);
-			const batchRef = doc(db, "tmpbatches", batchId);
+			const batchRef = doc(db, "testBatches", batchId);
 			const batchDoc = await getDoc(batchRef);
 
 			const now = new Date();
@@ -280,7 +280,7 @@ export class UploaderService {
 					updatedAt: now,
 					examId: examId,
 					totalQuizzes: 1,
-					quizzes: [
+					examDetails: [
 						{
 							description: quizInfo.description,
 							duration: quizInfo.duration,
@@ -304,19 +304,19 @@ export class UploaderService {
 				console.log("Updating existing batch metadata");
 				const existingData = batchDoc.data() as BatchMetadata;
 
-				// Initialize quizzes array if it doesn't exist
-				if (!existingData.quizzes) {
-					existingData.quizzes = [];
+				// Initialize examDetails array if it doesn't exist
+				if (!existingData.examDetails) {
+					existingData.examDetails = [];
 					existingData.totalQuizzes = 0;
 				}
 
-				const existingQuizIndex = existingData.quizzes.findIndex(
+				const existingQuizIndex = existingData.examDetails.findIndex(
 					(q) => q.title === quizInfo.title
 				);
 
 				if (existingQuizIndex === -1) {
 					console.log("Adding new quiz to batch");
-					existingData.quizzes.push({
+					existingData.examDetails.push({
 						description: quizInfo.description,
 						duration: quizInfo.duration,
 						negativeScore: quizInfo.negativeScore,
@@ -338,7 +338,7 @@ export class UploaderService {
 				} else {
 					console.log("Updating existing quiz in batch");
 					const existingQuiz =
-						existingData.quizzes[existingQuizIndex];
+						existingData.examDetails[existingQuizIndex];
 
 					// Initialize quizIds array if it doesn't exist
 					if (!existingQuiz.quizIds) {

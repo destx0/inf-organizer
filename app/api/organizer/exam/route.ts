@@ -23,14 +23,14 @@ export async function POST(request: Request) {
 		const pyqsBatchId = generateBatchId(name, "pyq");
 
 		// Create batch documents with custom IDs
-		await setDoc(doc(db, "tmpbatches", fullMockBatchId), {
+		await setDoc(doc(db, "testBatches", fullMockBatchId), {
 			type: "exam",
 			batchType: "full_mock",
 			examName: name,
 			createdAt: new Date(),
 		});
 
-		await setDoc(doc(db, "tmpbatches", pyqsBatchId), {
+		await setDoc(doc(db, "testBatches", pyqsBatchId), {
 			type: "exam",
 			batchType: "pyqs",
 			examName: name,
