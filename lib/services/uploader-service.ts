@@ -132,7 +132,7 @@ export class UploaderService {
 							};
 
 							const questionDoc = await addDoc(
-								collection(db, "tmpQuestions"),
+								collection(db, "questions"),
 								questionData
 							);
 
