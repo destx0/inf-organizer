@@ -3,18 +3,22 @@
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { getIntendedPath, clearIntendedPath } from "@/lib/utils/path-utils";
 
 export default function LoginPage() {
 	const router = useRouter();
+	const pathname = usePathname();
 	const { user } = useAuthStore();
 
 	useEffect(() => {
-		// If user is already logged in, redirect to uploader
+		// If user is already logged in, redirect to the intended path
 		if (user) {
-			router.push("/uploader");
+			const redirectPath = getIntendedPath();
+			router.push(redirectPath);
+			clearIntendedPath();
 		}
 	}, [user, router]);
 
@@ -22,7 +26,9 @@ export default function LoginPage() {
 		try {
 			const provider = new GoogleAuthProvider();
 			await signInWithPopup(auth, provider);
-			router.push("/uploader"); // Redirect after successful login
+			const redirectPath = getIntendedPath();
+			router.push(redirectPath);
+			clearIntendedPath();
 		} catch (error) {
 			console.error("Error signing in with Google:", error);
 		}

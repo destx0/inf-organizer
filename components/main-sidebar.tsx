@@ -11,13 +11,18 @@ import {
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { LogIn, LogOut, Upload, User } from "lucide-react";
+import { Download, LogIn, LogOut, Upload, User } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { UploaderSection } from "@/components/uploader-section";
+import { DownloaderSection } from "@/components/downloader-section";
+import { usePathname } from "next/navigation";
+import { setIntendedPath } from "@/lib/utils/path-utils";
+import Link from "next/link";
 
 export function MainSidebar() {
 	const user = useAuthStore((state) => state.user);
+	const pathname = usePathname();
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -36,6 +41,12 @@ export function MainSidebar() {
 		}
 	};
 
+	const isDownloaderPath = pathname?.includes("/downloader");
+
+	const handleNavigation = (path: string) => {
+		setIntendedPath(path);
+	};
+
 	return (
 		<Sidebar>
 			<SidebarHeader className="border-b px-6 py-4">
@@ -48,18 +59,43 @@ export function MainSidebar() {
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							asChild
-							className="px-4 py-2 hover:bg-accent rounded-lg transition-colors"
+							className={`px-4 py-2 hover:bg-accent rounded-lg transition-colors ${
+								!isDownloaderPath ? "bg-accent" : ""
+							}`}
 						>
-							<a href="/uploader">
+							<Link
+								href="/uploader"
+								onClick={() => handleNavigation("/uploader")}
+							>
 								<Upload className="h-4 w-4" />
 								<span>Uploader</span>
-							</a>
+							</Link>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+					<SidebarMenuItem>
+						<SidebarMenuButton
+							asChild
+							className={`px-4 py-2 hover:bg-accent rounded-lg transition-colors ${
+								isDownloaderPath ? "bg-accent" : ""
+							}`}
+						>
+							<Link
+								href="/downloader"
+								onClick={() => handleNavigation("/downloader")}
+							>
+								<Download className="h-4 w-4" />
+								<span>Downloader</span>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 
-				<div className=" px-4">
-					<UploaderSection />
+				<div className="px-4">
+					{isDownloaderPath ? (
+						<DownloaderSection />
+					) : (
+						<UploaderSection />
+					)}
 				</div>
 			</SidebarContent>
 			<SidebarFooter className="border-t p-4">

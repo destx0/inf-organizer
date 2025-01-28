@@ -17,6 +17,7 @@ import { useCallback, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRouter } from "next/navigation";
+import { setIntendedPath } from "@/lib/utils/path-utils";
 
 function isExamArray(data: any): data is OrganizerData {
 	return data && Array.isArray(data.exams);
@@ -41,6 +42,7 @@ export function UploaderSection() {
 
 	useEffect(() => {
 		if (!user) {
+			setIntendedPath("/uploader");
 			router.push("/login");
 			return;
 		}
