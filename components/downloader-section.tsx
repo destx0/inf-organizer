@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useOrganizerStore } from "@/lib/store/organizer-store";
+import { useDownloaderStore } from "@/lib/store/downloader-store";
 import { TreeView } from "@/components/tree-view";
 import { Book } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +13,7 @@ export function DownloaderSection() {
 	const { user } = useAuthStore();
 	const { data, setSelectedId, fetchData, isLoading, error } =
 		useOrganizerStore();
+	const { fetchQuizzesByBatchId, setSelectedBatchId } = useDownloaderStore();
 
 	useEffect(() => {
 		if (!user) {
@@ -23,10 +25,30 @@ export function DownloaderSection() {
 	}, [fetchData, user, router]);
 
 	const handleNodeClick = useCallback(
-		(nodeId: string) => {
+		async (nodeId: string) => {
 			setSelectedId(nodeId);
+
+			// Check if the node is a valid batch node (section or topic)
+			const isBatchNode = data?.exams?.some((exam) => {
+				return (
+					exam.full_mock === nodeId ||
+					exam.pyqs === nodeId ||
+					exam.sections.some(
+						(section) =>
+							section.section_batchid === nodeId ||
+							section.topics.some(
+								(topic) => topic.topic_batchid === nodeId
+							)
+					)
+				);
+			});
+
+			if (isBatchNode) {
+				setSelectedBatchId(nodeId);
+				await fetchQuizzesByBatchId(nodeId);
+			}
 		},
-		[setSelectedId]
+		[setSelectedId, fetchQuizzesByBatchId, setSelectedBatchId, data?.exams]
 	);
 
 	const treeData =
@@ -68,7 +90,7 @@ export function DownloaderSection() {
 			<Separator className="mb-4" />
 			<div className="flex items-center justify-between">
 				<h3 className="text-sm font-medium text-muted-foreground">
-					Download Quiz Data
+					Select Quiz
 				</h3>
 			</div>
 
