@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, collection } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 interface QuizMetadata {
 	title: string;
