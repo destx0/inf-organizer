@@ -12,7 +12,7 @@ interface OrganizerStore {
 	fetchData: () => Promise<void>;
 	setSelectedId: (id: string | null) => void;
 	createExam: (name: string) => Promise<void>;
-	createSection: (examId: string, name: string) => Promise<void>;
+	createSection: (examId: string, names: string | string[]) => Promise<void>;
 	createTopic: (
 		examId: string,
 		sectionId: string,
@@ -80,26 +80,31 @@ export const useOrganizerStore = create<OrganizerStore>((set, get) => ({
 			set({ error: "Failed to create exam", isLoading: false });
 		}
 	},
-	createSection: async (examId: string, name: string) => {
+	createSection: async (examId: string, names: string | string[]) => {
 		try {
 			set({ isLoading: true, error: null });
-			console.log("Creating section:", { examId, name }); // Debug log
-			const response = await fetch("/api/organizer/section", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ examId, name }),
-			});
+			const nameArray = Array.isArray(names) ? names : [names];
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				console.error("Section creation failed:", errorData);
-				throw new Error("Failed to create section");
+			// Create sections sequentially
+			for (const name of nameArray) {
+				console.log("Creating section:", { examId, name });
+				const response = await fetch("/api/organizer/section", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ examId, name }),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					console.error("Section creation failed:", errorData);
+					throw new Error(`Failed to create section: ${name}`);
+				}
 			}
 
 			await get().fetchData();
 		} catch (error) {
 			console.error("Error in createSection:", error);
-			set({ error: "Failed to create section", isLoading: false });
+			set({ error: "Failed to create section(s)", isLoading: false });
 		}
 	},
 	createTopic: async (examId: string, sectionId: string, name: string) => {

@@ -54,20 +54,31 @@ export function UploaderSection() {
 		console.log("Data changed:", data);
 	}, [data]);
 
-	const handleCreateExam = async (name: string) => {
-		await createExam(name);
+	const handleCreateExam = async (name: string | string[]) => {
+		if (typeof name === "string") {
+			await createExam(name);
+		}
 	};
 
-	const handleCreateSection = async (examId: string, name: string) => {
-		await createSection(examId, name);
+	const handleCreateSection = async (
+		examId: string,
+		names: string | string[]
+	) => {
+		await createSection(examId, names);
 	};
 
 	const handleCreateTopic = async (
 		examId: string,
 		sectionId: string,
-		name: string
+		names: string | string[]
 	) => {
-		await createTopic(examId, sectionId, name);
+		if (Array.isArray(names)) {
+			for (const name of names) {
+				await createTopic(examId, sectionId, name);
+			}
+		} else {
+			await createTopic(examId, sectionId, names);
+		}
 	};
 
 	const handleNodeClick = useCallback(
@@ -104,10 +115,10 @@ export function UploaderSection() {
 				actions: (
 					<CreateButton
 						type="section"
-						onSubmit={(name) =>
+						onSubmit={(names) =>
 							handleCreateSection(
 								exam.name.toLowerCase().replace(/\s+/g, ""),
-								name
+								names
 							)
 						}
 						parentName={exam.name}
@@ -133,13 +144,13 @@ export function UploaderSection() {
 						actions: (
 							<CreateButton
 								type="topic"
-								onSubmit={(name) =>
+								onSubmit={(names) =>
 									handleCreateTopic(
 										exam.name
 											.toLowerCase()
 											.replace(/\s+/g, ""),
 										section.section_batchid,
-										name
+										names
 									)
 								}
 								parentName={section.name}
@@ -191,7 +202,14 @@ export function UploaderSection() {
 				<h3 className="text-sm font-medium text-muted-foreground">
 					Exam Categories
 				</h3>
-				<CreateButton type="exam" onSubmit={handleCreateExam} />
+				<CreateButton
+					type="exam"
+					onSubmit={(name) => {
+						if (typeof name === "string") {
+							handleCreateExam(name);
+						}
+					}}
+				/>
 			</div>
 
 			{isLoading ? (
