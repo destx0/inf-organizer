@@ -1,22 +1,11 @@
 import { create } from "zustand";
 import { DownloaderService } from "@/lib/services/downloader-service";
-import { fetchQuizzes, togglePremium } from "@/lib/services/quiz-service";
-
-interface QuizMetadata {
-	createdAt?: { seconds: number; nanoseconds: number };
-	isPremium: boolean | undefined;
-	title: string;
-	description?: string;
-	duration?: number;
-	negativeScore?: number;
-	positiveScore?: number;
-	thumbnailLink?: string;
-	primaryQuizId?: string;
-	quizIds?: {
-		language: string;
-		quizId: string;
-	}[];
-}
+import {
+	fetchQuizzes,
+	togglePremium,
+	updateQuizDetails,
+} from "@/lib/services/quiz-service";
+import { QuizMetadata } from "@/lib/types";
 
 interface DownloaderStore {
 	isDownloading: boolean;
@@ -31,6 +20,10 @@ interface DownloaderStore {
 	setProgress: (progress: number) => void;
 	handleDownload: (quizId: string) => Promise<void>;
 	toggleQuizPremium: (quizIndex: number, isPremium: boolean) => Promise<void>;
+	updateQuiz: (
+		quizIndex: number,
+		updatedQuiz: Partial<QuizMetadata>
+	) => Promise<void>;
 }
 
 export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
@@ -119,6 +112,39 @@ export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
 			console.log("Quiz list refreshed successfully");
 		} catch (error) {
 			console.error("Error in toggleQuizPremium:", error);
+		}
+	},
+	updateQuiz: async (
+		quizIndex: number,
+		updatedQuiz: Partial<QuizMetadata>
+	) => {
+		const batchId = get().selectedBatchId;
+
+		if (!batchId) {
+			console.error("No batch ID selected");
+			return;
+		}
+
+		try {
+			const { success, error } = await updateQuizDetails(
+				batchId,
+				quizIndex,
+				updatedQuiz
+			);
+
+			if (!success) {
+				throw new Error(error ?? "Failed to update quiz");
+			}
+
+			// Update local state
+			set((state) => ({
+				quizzes: state.quizzes.map((quiz, idx) =>
+					idx === quizIndex ? { ...quiz, ...updatedQuiz } : quiz
+				),
+			}));
+		} catch (error) {
+			console.error("Error updating quiz:", error);
+			throw error;
 		}
 	},
 }));

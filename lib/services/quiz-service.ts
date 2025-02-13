@@ -172,3 +172,38 @@ export async function togglePremium(
 		};
 	}
 }
+
+export const updateQuizDetails = async (
+	batchId: string,
+	quizIndex: number,
+	updatedData: Partial<QuizMetadata>
+) => {
+	try {
+		console.log("Making update request:", { batchId, quizIndex, updatedData });
+		
+		const response = await fetch('/api/quiz/update', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				batchId,
+				quizIndex,
+				updatedData,
+			}),
+		});
+
+		console.log("Response status:", response.status);
+		const data = await response.json();
+		console.log("Response data:", data);
+
+		return data;
+	} catch (error) {
+		console.error('Detailed error in updateQuizDetails:', {
+			error,
+			message: error.message,
+			stack: error.stack,
+		});
+		return { success: false, error: 'Failed to update quiz', details: error.message };
+	}
+};

@@ -4,6 +4,25 @@ import { useDownloaderStore } from "@/lib/store/downloader-store";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+import { QuizMetadata, EditFormData } from "@/lib/types";
 
 function formatDate(timestamp: { seconds: number; nanoseconds: number }) {
 	if (!timestamp) return "";
@@ -23,7 +42,60 @@ export default function DownloaderPage() {
 		quizzes,
 		isLoading: isLoadingQuizzes,
 		toggleQuizPremium,
+		updateQuiz,
 	} = useDownloaderStore();
+
+	const [editingQuiz, setEditingQuiz] = useState<QuizMetadata | null>(null);
+	const [editForm, setEditForm] = useState<EditFormData>({
+		title: "",
+		description: "",
+		duration: "",
+		positiveScore: "",
+		negativeScore: "",
+	});
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+	const handleEditClick = (quiz: QuizMetadata) => {
+		setEditingQuiz(quiz);
+		setEditForm({
+			title: quiz.title,
+			description: quiz.description || "",
+			duration: quiz.duration?.toString() || "",
+			positiveScore: quiz.positiveScore?.toString() || "",
+			negativeScore: quiz.negativeScore?.toString() || "",
+		});
+		setIsDialogOpen(true);
+	};
+
+	const handleSaveEdit = async () => {
+		if (!editingQuiz) return;
+
+		const updatedData: Partial<QuizMetadata> = {
+			title: editForm.title,
+			description: editForm.description,
+			duration: parseInt(editForm.duration) || editingQuiz.duration,
+			positiveScore:
+				parseInt(editForm.positiveScore) || editingQuiz.positiveScore,
+			negativeScore:
+				parseInt(editForm.negativeScore) || editingQuiz.negativeScore,
+		};
+
+		try {
+			const quizIndex = quizzes.findIndex(
+				(q) => q.primaryQuizId === editingQuiz.primaryQuizId
+			);
+
+			if (quizIndex === -1) {
+				throw new Error("Quiz not found");
+			}
+
+			await updateQuiz(quizIndex, updatedData);
+			setIsDialogOpen(false);
+			setEditingQuiz(null);
+		} catch (error) {
+			console.error("Failed to update quiz:", error);
+		}
+	};
 
 	return (
 		<div className="container mx-auto p-4">
@@ -61,6 +133,161 @@ export default function DownloaderPage() {
 											>
 												Premium
 											</Label>
+											<Dialog
+												open={isDialogOpen}
+												onOpenChange={setIsDialogOpen}
+											>
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														asChild
+													>
+														<Button
+															variant="ghost"
+															size="icon"
+														>
+															<MoreVertical className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent>
+														<DialogTrigger asChild>
+															<DropdownMenuItem
+																onSelect={() =>
+																	handleEditClick(
+																		quiz
+																	)
+																}
+															>
+																<Edit className="h-4 w-4 mr-2" />
+																Edit Quiz
+															</DropdownMenuItem>
+														</DialogTrigger>
+													</DropdownMenuContent>
+												</DropdownMenu>
+
+												<DialogContent>
+													<DialogHeader>
+														<DialogTitle>
+															Edit Quiz
+														</DialogTitle>
+													</DialogHeader>
+													<div className="space-y-4 py-4">
+														<div className="space-y-2">
+															<Label>Title</Label>
+															<Input
+																value={
+																	editForm.title
+																}
+																onChange={(e) =>
+																	setEditForm(
+																		{
+																			...editForm,
+																			title: e
+																				.target
+																				.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-2">
+															<Label>
+																Description
+															</Label>
+															<Textarea
+																value={
+																	editForm.description
+																}
+																onChange={(e) =>
+																	setEditForm(
+																		{
+																			...editForm,
+																			description:
+																				e
+																					.target
+																					.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-2">
+															<Label>
+																Duration
+																(minutes)
+															</Label>
+															<Input
+																type="number"
+																value={
+																	editForm.duration
+																}
+																onChange={(e) =>
+																	setEditForm(
+																		{
+																			...editForm,
+																			duration:
+																				e
+																					.target
+																					.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-2">
+															<Label>
+																Positive Score
+															</Label>
+															<Input
+																type="number"
+																value={
+																	editForm.positiveScore
+																}
+																onChange={(e) =>
+																	setEditForm(
+																		{
+																			...editForm,
+																			positiveScore:
+																				e
+																					.target
+																					.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-2">
+															<Label>
+																Negative Score
+															</Label>
+															<Input
+																type="number"
+																value={
+																	editForm.negativeScore
+																}
+																onChange={(e) =>
+																	setEditForm(
+																		{
+																			...editForm,
+																			negativeScore:
+																				e
+																					.target
+																					.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+														<Button
+															onClick={
+																handleSaveEdit
+															}
+															className="w-full"
+														>
+															Save Changes
+														</Button>
+													</div>
+												</DialogContent>
+											</Dialog>
 										</div>
 									</div>
 									{quiz.description && (
