@@ -1,20 +1,6 @@
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-
-interface QuizMetadata {
-	title: string;
-	description?: string;
-	duration?: number;
-	negativeScore?: number;
-	positiveScore?: number;
-	thumbnailLink?: string;
-	primaryQuizId?: string;
-	quizIds?: {
-		language: string;
-		quizId: string;
-	}[];
-	isPremium?: boolean;
-}
+import { QuizMetadata } from "@/lib/types";
 
 interface BatchData {
 	examDetails: QuizMetadata[];
@@ -173,18 +159,28 @@ export async function togglePremium(
 	}
 }
 
+interface UpdateResponse {
+	success: boolean;
+	error?: string;
+	details?: string;
+}
+
 export const updateQuizDetails = async (
 	batchId: string,
 	quizIndex: number,
 	updatedData: Partial<QuizMetadata>
-) => {
+): Promise<UpdateResponse> => {
 	try {
-		console.log("Making update request:", { batchId, quizIndex, updatedData });
-		
-		const response = await fetch('/api/quiz/update', {
-			method: 'POST',
+		console.log("Making update request:", {
+			batchId,
+			quizIndex,
+			updatedData,
+		});
+
+		const response = await fetch("/api/quiz/update", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/json',
+				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
 				batchId,
@@ -197,13 +193,17 @@ export const updateQuizDetails = async (
 		const data = await response.json();
 		console.log("Response data:", data);
 
-		return data;
+		return data as UpdateResponse;
 	} catch (error) {
-		console.error('Detailed error in updateQuizDetails:', {
+		console.error("Detailed error in updateQuizDetails:", {
 			error,
-			message: error.message,
-			stack: error.stack,
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
 		});
-		return { success: false, error: 'Failed to update quiz', details: error.message };
+		return {
+			success: false,
+			error: "Failed to update quiz",
+			details: error instanceof Error ? error.message : String(error),
+		};
 	}
 };
