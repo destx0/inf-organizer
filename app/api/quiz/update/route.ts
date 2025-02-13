@@ -40,6 +40,14 @@ export async function POST(request: Request) {
 
 		const examDetails = batchData?.examDetails || [];
 		const currentQuiz = examDetails[quizIndex];
+
+		if (!currentQuiz) {
+			return NextResponse.json(
+				{ success: false, error: "Quiz not found at specified index" },
+				{ status: 404 }
+			);
+		}
+
 		console.log("Current quiz data:", currentQuiz);
 
 		// Update the specific quiz in batch
@@ -58,31 +66,55 @@ export async function POST(request: Request) {
 				"fullQuizzes",
 				currentQuiz.primaryQuizId
 			);
-			updatePromises.push(
-				updateDoc(primaryQuizRef, {
-					title: updatedData.title,
-					description: updatedData.description,
-					duration: updatedData.duration,
-					positiveScore: updatedData.positiveScore,
-					negativeScore: updatedData.negativeScore,
-				})
-			);
+			const primaryQuizSnap = await getDoc(primaryQuizRef);
+
+			if (primaryQuizSnap.exists()) {
+				const primaryQuizData = primaryQuizSnap.data();
+				updatePromises.push(
+					updateDoc(primaryQuizRef, {
+						...primaryQuizData,
+						title: updatedData.title || primaryQuizData.title,
+						description:
+							updatedData.description ||
+							primaryQuizData.description,
+						duration:
+							updatedData.duration || primaryQuizData.duration,
+						positiveScore:
+							updatedData.positiveScore ||
+							primaryQuizData.positiveScore,
+						negativeScore:
+							updatedData.negativeScore ||
+							primaryQuizData.negativeScore,
+					})
+				);
+			}
 		}
 
 		// Update all language-specific quizzes
 		if (currentQuiz.quizIds && currentQuiz.quizIds.length > 0) {
-			currentQuiz.quizIds.forEach(({ quizId }: { quizId: string }) => {
+			for (const { quizId } of currentQuiz.quizIds) {
 				const quizRef = doc(db, "fullQuizzes", quizId);
-				updatePromises.push(
-					updateDoc(quizRef, {
-						title: updatedData.title,
-						description: updatedData.description,
-						duration: updatedData.duration,
-						positiveScore: updatedData.positiveScore,
-						negativeScore: updatedData.negativeScore,
-					})
-				);
-			});
+				const quizSnap = await getDoc(quizRef);
+
+				if (quizSnap.exists()) {
+					const quizData = quizSnap.data();
+					updatePromises.push(
+						updateDoc(quizRef, {
+							...quizData,
+							title: updatedData.title || quizData.title,
+							description:
+								updatedData.description || quizData.description,
+							duration: updatedData.duration || quizData.duration,
+							positiveScore:
+								updatedData.positiveScore ||
+								quizData.positiveScore,
+							negativeScore:
+								updatedData.negativeScore ||
+								quizData.negativeScore,
+						})
+					);
+				}
+			}
 		}
 
 		// Update the batch document

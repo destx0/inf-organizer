@@ -24,6 +24,7 @@ interface DownloaderStore {
 		quizIndex: number,
 		updatedQuiz: Partial<QuizMetadata>
 	) => Promise<void>;
+	updateAllQuizzes: (updatedData: Partial<QuizMetadata>) => Promise<void>;
 }
 
 export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
@@ -144,6 +145,33 @@ export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
 			}));
 		} catch (error) {
 			console.error("Error updating quiz:", error);
+			throw error;
+		}
+	},
+	updateAllQuizzes: async (updatedData: Partial<QuizMetadata>) => {
+		const batchId = get().selectedBatchId;
+		const quizzes = get().quizzes;
+
+		if (!batchId) {
+			console.error("No batch ID selected");
+			return;
+		}
+
+		try {
+			// Update all quizzes in sequence
+			for (let i = 0; i < quizzes.length; i++) {
+				await updateQuizDetails(batchId, i, updatedData);
+			}
+
+			// Update local state
+			set((state) => ({
+				quizzes: state.quizzes.map((quiz) => ({
+					...quiz,
+					...updatedData,
+				})),
+			}));
+		} catch (error) {
+			console.error("Error updating all quizzes:", error);
 			throw error;
 		}
 	},
