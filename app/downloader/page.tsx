@@ -20,7 +20,11 @@ export default function DownloaderPage() {
 				<div className="text-center py-4">Loading quizzes...</div>
 			) : quizzes.length > 0 ? (
 				<div className="space-y-4">
-					<BatchEditDialog onBatchEdit={updateAllQuizzes} />
+					<BatchEditDialog
+						onBatchEdit={updateAllQuizzes}
+						quizzes={quizzes}
+						batchId="abc_full_mock"
+					/>
 					<h2 className="text-lg font-semibold">Available Quizzes</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{quizzes.map((quiz, index) => (

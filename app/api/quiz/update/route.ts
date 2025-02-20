@@ -9,6 +9,15 @@ interface UpdateRequestBody {
 	updatedData: Partial<QuizMetadata>;
 }
 
+function extractNumber(title: string): number | null {
+	const match = title.match(/\d+/);
+	return match ? parseInt(match[0]) : null;
+}
+
+function replacePlaceholder(pattern: string, number: number): string {
+	return pattern.replaceAll("$$", number.toString());
+}
+
 export async function POST(request: Request) {
 	try {
 		const { batchId, quizIndex, updatedData } =
@@ -70,10 +79,18 @@ export async function POST(request: Request) {
 
 			if (primaryQuizSnap.exists()) {
 				const primaryQuizData = primaryQuizSnap.data();
+				let newTitle = updatedData.title;
+
+				if (newTitle && newTitle.includes("$$")) {
+					const existingNumber =
+						extractNumber(primaryQuizData.title) || quizIndex + 1;
+					newTitle = replacePlaceholder(newTitle, existingNumber);
+				}
+
 				updatePromises.push(
 					updateDoc(primaryQuizRef, {
 						...primaryQuizData,
-						title: updatedData.title || primaryQuizData.title,
+						title: newTitle || primaryQuizData.title,
 						description:
 							updatedData.description ||
 							primaryQuizData.description,
@@ -98,10 +115,18 @@ export async function POST(request: Request) {
 
 				if (quizSnap.exists()) {
 					const quizData = quizSnap.data();
+					let newTitle = updatedData.title;
+
+					if (newTitle && newTitle.includes("$$")) {
+						const existingNumber =
+							extractNumber(quizData.title) || quizIndex + 1;
+						newTitle = replacePlaceholder(newTitle, existingNumber);
+					}
+
 					updatePromises.push(
 						updateDoc(quizRef, {
 							...quizData,
-							title: updatedData.title || quizData.title,
+							title: newTitle || quizData.title,
 							description:
 								updatedData.description || quizData.description,
 							duration: updatedData.duration || quizData.duration,

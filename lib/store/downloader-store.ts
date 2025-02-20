@@ -7,6 +7,16 @@ import {
 } from "@/lib/services/quiz-service";
 import { QuizMetadata } from "@/lib/types";
 
+interface QuizUpdate {
+	quizIndex: number;
+	batchId: string;
+	title?: string;
+	duration?: number;
+	positiveScore?: number;
+	negativeScore?: number;
+	description?: string;
+}
+
 interface DownloaderStore {
 	isDownloading: boolean;
 	progress: number;
@@ -24,7 +34,7 @@ interface DownloaderStore {
 		quizIndex: number,
 		updatedQuiz: Partial<QuizMetadata>
 	) => Promise<void>;
-	updateAllQuizzes: (updatedData: Partial<QuizMetadata>) => Promise<void>;
+	updateAllQuizzes: (updates: QuizUpdate[]) => Promise<void>;
 }
 
 export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
@@ -148,28 +158,76 @@ export const useDownloaderStore = create<DownloaderStore>((set, get) => ({
 			throw error;
 		}
 	},
-	updateAllQuizzes: async (updatedData: Partial<QuizMetadata>) => {
-		const batchId = get().selectedBatchId;
-		const quizzes = get().quizzes;
-
-		if (!batchId) {
-			console.error("No batch ID selected");
-			return;
-		}
-
+	updateAllQuizzes: async (updates: QuizUpdate[]) => {
 		try {
-			// Update all quizzes in sequence
-			for (let i = 0; i < quizzes.length; i++) {
-				await updateQuizDetails(batchId, i, updatedData);
+			const chunkSize = 5;
+			const chunks: QuizUpdate[][] = [];
+
+			// Create chunks of updates
+			for (let i = 0; i < updates.length; i += chunkSize) {
+				chunks.push(updates.slice(i, i + chunkSize));
 			}
+
+			let completedUpdates = 0;
+
+			await Promise.all(
+				chunks.map(async (chunk) => {
+					await Promise.all(
+						chunk.map(async (update: QuizUpdate) => {
+							const { quizIndex, batchId, ...updatedData } =
+								update;
+							const response = await fetch("/api/quiz/update", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									batchId,
+									quizIndex,
+									updatedData,
+								}),
+							});
+
+							if (!response.ok) {
+								throw new Error(
+									`Failed to update quiz at index ${quizIndex}`
+								);
+							}
+
+							completedUpdates++;
+							set((state) => ({
+								...state,
+								updateProgress:
+									(completedUpdates / updates.length) * 100,
+							}));
+						})
+					);
+				})
+			);
 
 			// Update local state
 			set((state) => ({
-				quizzes: state.quizzes.map((quiz) => ({
-					...quiz,
-					...updatedData,
-				})),
+				quizzes: state.quizzes.map((quiz, index) => {
+					const update = updates.find(
+						(u: QuizUpdate) => u.quizIndex === index
+					);
+					if (update) {
+						const {
+							quizIndex: _qIndex,
+							batchId: _bId,
+							...updatedData
+						} = update;
+						return { ...quiz, ...updatedData };
+					}
+					return quiz;
+				}),
 			}));
+
+			// Refresh quizzes
+			const selectedBatchId = get().selectedBatchId;
+			if (selectedBatchId) {
+				await get().fetchQuizzesByBatchId(selectedBatchId);
+			}
 		} catch (error) {
 			console.error("Error updating all quizzes:", error);
 			throw error;
